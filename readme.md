@@ -9,5 +9,5 @@ Please feel free to include this code in your own projects and further develop a
 
 Usage:
 =============
-   $o = new Orvibo('AC:CF:23:9C:A0:D0', '192.168.241.252', 10000);
-   $o->on();
+    $o = new Orvibo('AC:CF:23:9C:A0:D0', '192.168.241.252', 10000);
+    $o->on();

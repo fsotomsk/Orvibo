@@ -3,7 +3,8 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2015 Phil Parsons <phil@parsons.uk.com>
+Copyright (c) 2015 Phil Parsons <phil@parsons.uk.com>,
+              2016 Sergey Fedosov <fso@vsibiri.info>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,71 +27,77 @@ SOFTWARE.
 
 class Orvibo
 {
-  
-  private $host;
-  private $port;
-  private $mac;
-  private $delay = 10000; //microseconds
-  private $subscribed=false;
-  private $twenties = array('20','20','20','20','20','20');
-  private $zeroes = array('00','00','00','00');
-  
-  public function __construct($mac, $host, $port = 10000)
-  {	 
-   $this->host = $host;
-   $this->port = $port;
-   $this->mac  = preg_split('/:/', $mac, -1, PREG_SPLIT_NO_EMPTY);
-   if ($this->subscribed === false) {
-      $this->subscribe();
-    }
-   }
-  public function getDelay()
-  {
-    return $this->delay;
-  }
-  private function subscribe() {
-    $command = array('68', '64', '00', '1e', '63', '6c');
-    $command = array_merge($command, $this->mac, $this->twenties, array_reverse($this->mac),
-			   $this->twenties);
-    $this->sendCommand($command);
-    $this->subscribed=true;
-  }
-  public function on() {
-   if ($this->subscribed === false) {
-      $this->subscribe();
-    }
-    $command = array('68', '64', '00', '17', '64', '63');
-    $command = array_merge($command, $this->mac, $this->twenties, $this->zeroes, array('01'));
-    $this->sendCommand($command);    
-  }
-  
-  public function off() {
-   if ($this->subscribed === false) {
-      $this->subscribe();
-    }
-    $command = array('68', '64', '00', '17', '64', '63');
-    $command = array_merge($command, $this->mac, $this->twenties, $this->zeroes, array('00'));
-    $this->sendCommand($command);    
-  }
-  
-  public function sendCommand(Array $command)
-  {
-    $message = $this->arr2bin($command);
-    for ($try=0; $try < 5; $try++) {
-      if ($socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP)) {
-        socket_sendto($socket, $message, strlen($message), 0, $this->host, $this->port);
-        socket_close($socket);
-        usleep($this->getDelay()); //wait 100ms before sending next command
-      }
-    }
-  }
 
-  public function arr2bin(array $arr)
-  {
-    $bytes = "";
-    foreach($arr as $a) {
-        $bytes .= chr(hexdec($a));
+    private $host;
+    private $port;
+    private $mac;
+    private $delay = 10000; //microseconds
+    private $subscribed = false;
+    private $twenties = ['20', '20', '20', '20', '20', '20'];
+    private $zeroes = ['00', '00', '00', '00'];
+
+    public function __construct($mac, $host, $port = 10000)
+    {
+        $this->host = $host;
+        $this->port = $port;
+        $this->mac = explode(':', $mac);
+        if ($this->subscribed === false) {
+            $this->subscribe();
+        }
     }
-    return $bytes;
-  }
+
+    public function getDelay()
+    {
+        return $this->delay;
+    }
+
+    private function subscribe()
+    {
+        $command = ['68', '64', '00', '1e', '63', '6c'];
+        $command = array_merge($command, $this->mac, $this->twenties, array_reverse($this->mac),
+            $this->twenties);
+        $this->sendCommand($command);
+        $this->subscribed = true;
+    }
+
+    public function on()
+    {
+        if ($this->subscribed === false) {
+            $this->subscribe();
+        }
+        $command = ['68', '64', '00', '17', '64', '63'];
+        $command = array_merge($command, $this->mac, $this->twenties, $this->zeroes, ['01']);
+        $this->sendCommand($command);
+    }
+
+    public function off()
+    {
+        if ($this->subscribed === false) {
+            $this->subscribe();
+        }
+        $command = ['68', '64', '00', '17', '64', '63'];
+        $command = array_merge($command, $this->mac, $this->twenties, $this->zeroes, ['00']);
+        $this->sendCommand($command);
+    }
+
+    public function sendCommand(Array $command)
+    {
+        $message = $this->arr2bin($command);
+        for ($try = 0; $try < 5; $try++) {
+            if ($socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP)) {
+                socket_sendto($socket, $message, strlen($message), 0, $this->host, $this->port);
+                socket_close($socket);
+                usleep($this->getDelay()); //wait 100ms before sending next command
+            }
+        }
+    }
+
+    public function arr2bin(array $arr)
+    {
+        return implode(null,
+            array_map('chr',
+                array_map('hexdec', $arr)
+            )
+        );
+    }
 }
